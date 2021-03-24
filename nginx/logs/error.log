@@ -1,0 +1,6 @@
+2021/03/24 11:26:13 [error] 21#21: *1 access forbidden by rule, client: 192.168.0.3, server: nginx, request: "GET /stub_status HTTP/1.1", host: "nginx"
+2021/03/24 11:28:40 [emerg] 1#1: invalid number of arguments in "allow" directive in /etc/nginx/conf.d/nginx.conf:14
+2021/03/24 11:29:02 [emerg] 1#1: invalid number of arguments in "allow" directive in /etc/nginx/conf.d/nginx.conf:16
+2021/03/24 11:31:04 [emerg] 1#1: invalid parameter "localhost" in /etc/nginx/conf.d/nginx.conf:13
+2021/03/24 11:31:17 [error] 23#23: *1 access forbidden by rule, client: 192.168.0.3, server: nginx, request: "GET /stub_status HTTP/1.1", host: "nginx"
+2021/03/24 11:40:37 [error] 24#24: *3 open() "/usr/share/nginx/html/favicon.ico" failed (2: No such file or directory), client: 192.168.64.1, server: nginx, request: "GET /favicon.ico HTTP/1.1", host: "localhost:8080", referrer: "http://localhost:8080/"

@@ -1,0 +1,6 @@
+groups:
+  - name: nginx
+    rules:
+    - alert: NginxDown
+      expr: nginx_up{instance="nginx_exp:9113"} < 1
+      for: 2m
