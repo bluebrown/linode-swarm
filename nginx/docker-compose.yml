@@ -13,7 +13,7 @@ services:
       - 8080:80
     networks:
       - internal
-  nginx_exp:
+  nginx-exporter:
     image: nginx/nginx-prometheus-exporter
     command: -nginx.scrape-uri=http://nginx/stub_status
     depends_on:
