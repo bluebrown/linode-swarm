@@ -15,6 +15,12 @@ The repo contains 2 different stacks.
 
 ## Setup
 
+If you have ansible installed you can simple run the playbook to deploy and teardown the stacks.
+
+```bash
+ansible-playbook deploy.yml
+ansible-playbook teardown.yml
+```
 
 Before starting the container, a network named monitoring has to be created. This network is used to expose the metrics pages to prometheus.
 
