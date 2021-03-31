@@ -1,5 +1,5 @@
 ---
-- name: Run using a project directory
+- name: teardown
   hosts: localhost
   gather_facts: no
 

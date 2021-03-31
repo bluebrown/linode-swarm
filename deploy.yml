@@ -1,5 +1,5 @@
 ---
-- name: Run using a project directory
+- name: deploy
   hosts: localhost
   gather_facts: no
 
