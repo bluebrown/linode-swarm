@@ -4,9 +4,9 @@
   gather_facts: no
 
   tasks:
-    - name: remove network
-      docker_network:
-        name: monitoring
+    - name: nginx down
+      docker_compose:
+        project_src: nginx
         state: absent
 
     - name: profana down
@@ -14,7 +14,7 @@
         project_src: profana
         state: absent
 
-    - name: nginx down
-      docker_compose:
-        project_src: nginx
+    - name: remove network
+      docker_network:
+        name: monitoring
         state: absent
