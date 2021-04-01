@@ -1,11 +1,14 @@
 version: '3.9'
+
 networks:
   internal:
   monitoring:
     external: true
+
 volumes:
   prometheus-data:
   grafana-data:
+
 services:
   prometheus:
     image: prom/prometheus
@@ -19,8 +22,36 @@ services:
       - internal
       - monitoring
     links:
-      - cadvisor:cadvisor
       - node-exporter:node-exporter
+    
+  node-exporter:
+    image: quay.io/prometheus/node-exporter
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)'
+      - '--collector.cpu'
+      - '--collector.cpufreq'
+    networks:
+      - internal
+
+  cadvisor:
+    image: google/cadvisor
+    ports:
+      - 8888:8080
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro 
+    networks:
+      - internal
+
   grafana:
     image: grafana/grafana
     volumes:
@@ -33,29 +64,5 @@ services:
       - "GF_SECURITY_ADMIN_PASSWORD=super_secret"
       - "GF_USERS_ALLOW_SIGN_UP=false"
       - "GF_PATHS_PROVISIONING=/var/grafana/provisioning"
-    networks:
-      - internal
-  cadvisor:
-    image: google/cadvisor
-    ports:
-      - 8888:8080
-    volumes:
-      - /:/rootfs:ro
-      - /var/run:/var/run:rw
-      - /sys:/sys:ro
-      - /var/lib/docker/:/var/lib/docker:ro 
-    networks:
-      - internal
-  node-exporter:
-    image: quay.io/prometheus/node-exporter
-    volumes:
-      - /proc:/host/proc:ro
-      - /sys:/host/sys:ro
-      - /:/rootfs:ro
-    command:
-      - '--path.procfs=/host/proc'
-      - '--path.rootfs=/rootfs'
-      - '--path.sysfs=/host/sys'
-      - '--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)'
     networks:
       - internal
