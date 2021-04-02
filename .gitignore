@@ -1,1 +1,8 @@
-logs
+secrets
+*.tfvars.*
+inventory
+*.lock.hcl
+*.tfstate
+*.backup
+vars.yml
+.terraform

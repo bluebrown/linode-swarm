@@ -24,11 +24,4 @@ groups:
     for: 30s
     labels:
       severity: warning
-  
-- name: containers
-  rules:
-  - alert: NginxDown
-    expr: nginx_up{instance="nginx-exporter:9113"} < 1
-    for: 2m
-    labels:
-      severity: warning
+

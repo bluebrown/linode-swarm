@@ -1,9 +1,8 @@
 version: '3.9'
 
 networks:
-  internal:
   monitoring:
-    external: true
+    driver: overlay
 
 volumes:
   prometheus-data:
@@ -19,11 +18,24 @@ services:
       - prometheus-data:/prometheus
     command: --web.enable-lifecycle  --config.file=/etc/prometheus/prometheus.yml
     networks:
-      - internal
       - monitoring
     links:
       - node-exporter:node-exporter
+    deploy:
+      placement:
+        constraints:
+          - node.labels.prom==true
     
+  engine-proxy:
+    image: alpine/socat
+    networks:
+      - monitoring
+    expose: 
+      - "4998"
+    command: -d -d TCP-L:4998,fork TCP:192.168.64.1:4999
+    deploy:
+      mode: global
+
   node-exporter:
     image: quay.io/prometheus/node-exporter
     volumes:
@@ -35,22 +47,22 @@ services:
       - '--path.rootfs=/rootfs'
       - '--path.sysfs=/host/sys'
       - '--collector.filesystem.ignored-mount-points=^/(sys|proc|dev|host|etc)($$|/)'
-      - '--collector.cpu'
-      - '--collector.cpufreq'
     networks:
-      - internal
+      - monitoring
+    deploy:
+      mode: global
 
   cadvisor:
     image: google/cadvisor
-    ports:
-      - 8888:8080
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:rw
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro 
     networks:
-      - internal
+      - monitoring
+    deploy:
+      mode: global
 
   grafana:
     image: grafana/grafana
@@ -65,4 +77,8 @@ services:
       - "GF_USERS_ALLOW_SIGN_UP=false"
       - "GF_PATHS_PROVISIONING=/var/grafana/provisioning"
     networks:
-      - internal
+      - monitoring
+    deploy:
+      placement:
+        constraints:
+          - node.labels.prom==true
