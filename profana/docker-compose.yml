@@ -19,20 +19,16 @@ services:
     command: --web.enable-lifecycle  --config.file=/etc/prometheus/prometheus.yml
     networks:
       - monitoring
-    links:
-      - node-exporter:node-exporter
     deploy:
       placement:
         constraints:
           - node.labels.prom==true
     
-  engine-proxy:
+  dockerd-exporter:
     image: alpine/socat
     networks:
       - monitoring
-    expose: 
-      - "4998"
-    command: -d -d TCP-L:4998,fork TCP:192.168.64.1:4999
+    command: -d -d TCP-L:4999,fork TCP:10.11.0.1:4999
     deploy:
       mode: global
 

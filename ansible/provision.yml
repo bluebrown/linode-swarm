@@ -4,25 +4,18 @@
   vars_files:
       - vars.yml
 
-
-  handlers:
-
-    - name: restart sshd
-      service:
-        name: ssh
-        state: restarted
-        enabled: yes
-    
-    - name: restart fail2ban
-      service:
-        name: fail2ban
-        state: restarted
-        enabled: yes
-
-  tasks:
+  pre_tasks:
 
     - name: update system
-      apt: update_cache=yes force_apt_get=yes cache_valid_time=3600
+      apt: 
+        update_cache: yes 
+        force_apt_get: yes 
+        cache_valid_time: 3600
+
+    - name: Upgrade all apt packages
+      apt: upgrade=dist force_apt_get=yes
+
+  tasks:
 
     - name: change default chain policy (used to clean rules)
       iptables:
@@ -64,104 +57,52 @@
       iptables:
         chain: "INPUT"
         policy: DROP 
-
-    - name: install docker dependencies
-      apt:
-        name: "{{item}}"
-      loop:
-        - apt-transport-https
-        - ca-certificates
-        - curl
-        - gnupg
-        - lsb-release
-
-    - name: add repo
-      apt_key:
-        url: https://download.docker.com/linux/ubuntu/gpg
-        state: present
-
-    - name: ensure docker registry is available
-      apt_repository: 
-        repo: 'deb https://download.docker.com/linux/ubuntu bionic stable' 
-        state: present
-
-    - name: update apt
-      apt: 
-        update_cache: yes 
-        force_apt_get: yes 
-        cache_valid_time: 3600
-
-    - name: install docker
-      apt:
-        name: "{{item}}"
-      loop:
-        - docker-ce
-        - docker-ce-cli
-        - containerd.io
-
-    - name: restart docker
-      service: 
-        name: docker 
-        state: restarted
-        enabled: yes
-
-    - name: block public docker access
-      iptables:
-        action: insert
-        chain: DOCKER-USER
-        in_interface: eth0
-        jump: DROP
-
-    - name: Install pip
-      apt:
-        name: python3-pip
-        update_cache: yes
-        state: latest
-
-    - name: install docker sdk
-      pip:
-        name: docker
-        state: latest
+    
+    - name: save iptables
+      shell: iptables-save > /etc/iptables/rules.v4 && ip6tables-save > /etc/iptables/rules.v6
 
     - name: make sure sudo group exists
       group:
         name: sudo 
         state: present
-    - name: Add boxhead user and add it to sudo
+
+    - name: Add sudo user user and add it to sudo
       user: 
-        name: boxhead
+        name: "{{SUDO_USER_NAME}}"
         password: "{{SUDO_USER_PWD}}"
         state: present
         createhome: yes
-        groups: [sudo]
-    - name: Set up authorized keys for the boxhead user
+        groups: [ sudo ]
+  
+    - name: Set up authorized keys for the sudo user user
       authorized_key: 
-        user: boxhead
+        user: "{{SUDO_USER_NAME}}"
         key: "{{item}}"
       with_file:
         - ../secrets/playbox.pub
 
     - name: install fail2ban package
       apt: pkg=fail2ban state=present
+
     - name: copy fail2ban local config
-      notify: restart fail2ban
       copy: 
         src: conf/jail.local
         dest: /etc/fail2ban/jail.local
         owner: root
         group: root
         mode: 0644
+    
+    - name: enable fail2ban
+      service:
+        name: fail2ban
+        enabled: yes
 
     - name: install iptables-persistent
       apt: 
         pkg: iptables-persistent
         state: present
 
-    - name: safe ip table config
-      shell: iptables-save > /etc/iptables/rules.v4 && iptables-save > /etc/iptables/rules.v6
-
     - name: ssh config
-      notify: restart sshd
       with_dict:
         LoginGraceTime: "1m"
         PermitRootLogin: "no"
@@ -170,9 +111,19 @@
         PermitEmptyPasswords: "no"
         IgnoreRhosts: "yes"
         Protocol: 2
-        AllowUsers: boxhead
+        AllowUsers: "{{SUDO_USER_NAME}}"
       lineinfile:
         dest: /etc/ssh/sshd_config
         regexp: '^#?\s*{{item.key}}\s'
         line: '{{item.key}} {{item.value}}'
         state: present
+
+    - name: enable sshd
+      service:
+        name: ssh
+        enabled: yes
+
+#  post_tasks:
+#    
+#    - name: reboot
+#      reboot:

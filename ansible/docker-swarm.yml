@@ -1,0 +1,126 @@
+---
+- hosts: all
+  become: true
+  vars_files:
+      - vars.yml
+
+  pre_tasks:
+
+    - name: install docker dependencies
+      apt:
+        name: "{{item}}"
+      loop:
+        - apt-transport-https
+        - ca-certificates
+        - curl
+        - gnupg
+        - lsb-release
+
+    - name: add repo
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: ensure docker registry is available
+      apt_repository: 
+        repo: 'deb https://download.docker.com/linux/ubuntu bionic stable' 
+        state: present
+
+    - name: update apt
+      apt: 
+        update_cache: yes 
+        force_apt_get: yes 
+        cache_valid_time: 3600
+
+    - name: install docker
+      apt:
+        name: "{{item}}"
+      loop:
+        - docker-ce
+        - docker-ce-cli
+        - containerd.io
+
+    - name: Install pip
+      apt:
+        name: python3-pip
+        update_cache: yes
+        state: present
+
+    - name: install docker sdk
+      pip:
+        name: docker
+        state: present
+
+
+  tasks:
+
+    - name: copy docker daemon config
+      copy: 
+        src: conf/daemon.json
+        dest: /etc/docker/daemon.json
+        owner: root
+        group: root
+        mode: 0644
+
+    - name: restart docker
+      service:
+        name: docker
+        state: restarted
+        enabled: yes
+
+    - name: block public docker access
+      iptables:
+        action: insert
+        chain: DOCKER-USER
+        in_interface: eth0
+        jump: DROP
+
+    - name: allow established connections for docker
+      iptables:
+        action: insert
+        chain: DOCKER-USER
+        ctstate: [ RELATED, ESTABLISHED ]
+        in_interface: eth0
+        jump: ACCEPT
+
+    - name: allow swarm nodes
+      iptables:
+        chain: INPUT
+        source: "{{item}}/32"
+        jump: ACCEPT
+        ctstate: [ NEW ]
+      loop: "{{SWARM_ADDRS}}"
+
+    - name: save iptables
+      shell: iptables-save > /etc/iptables/rules.v4 && ip6tables-save > /etc/iptables/rules.v6
+
+    - name: leave swarm
+      docker_swarm:
+        state: absent
+    
+    - name: Delete a network, disconnecting all containers
+      docker_network:
+        name: docker_gwbridge
+        state: absent
+        force: yes
+
+    - name: create docker_gwbridge
+      docker_network:
+        name: docker_gwbridge
+        ipam_config:
+          - subnet: 10.11.0.0/16
+        driver_options:
+          com.docker.network.bridge.name: docker_gwbridge
+          com.docker.network.enable_icc: false
+          com.docker.network.enable_masquerade: true
+
+    - name: join to swarm
+      docker_swarm:
+        state: join
+        join_token: "{{SWARM_TOKEN}}"
+        remote_addrs: [ '{{COMMANDER_IP}}:2377' ]
+        labels:
+          linode_type: nanode
+          project: playbox
+
+

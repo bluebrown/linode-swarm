@@ -29,11 +29,9 @@ output "public_ip" {
   value = linode_instance.playbox.ip_address
 }
 
-
 output "private_ip" {
   value = linode_instance.playbox.private_ip_address
 }
-
 
 output "status" {
   value = linode_instance.playbox.status
