@@ -1,6 +1,8 @@
 version: '3.9'
 
 networks:
+  traefik_web:
+    external: true
   monitoring:
     driver: overlay
 
@@ -75,7 +77,17 @@ services:
       - "GF_PATHS_PROVISIONING=/var/grafana/provisioning"
     networks:
       - monitoring
+      - traefik_web
     deploy:
       placement:
         constraints:
           - node.labels.prom==true
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.grafana.entrypoints=http"
+        - "traefik.http.routers.grafana.rule=PathPrefix(`/`)"
+        - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+        - "traefik.http.services.grafana.loadbalancer.passhostheader=true"
+        - "traefik.docker.network=traefik_web"
+
+

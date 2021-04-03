@@ -1,0 +1,33 @@
+version: "3.9"
+
+networks:
+  web:
+    driver: overlay
+
+services:
+  router:
+    image: traefik:v2.4
+    command: 
+        - --api.insecure
+        - --providers.docker
+        - --providers.docker.swarmMode
+        - --providers.docker.exposedByDefault=false
+        - --entrypoints.http.address=:80
+        #- --providers.docker.tls.cert=/certs/fullchain.cert
+        #- --providers.docker.tls.key=path/to/privkey.prem
+        #- --entrypoints.websecure.address=:443
+        #- --entrypoints.web.http.redirections.entryPoint.scheme=https
+        #- --entrypoints.web.http.redirections.entryPoint.to=websecure
+        #- --entrypoints.web.http.redirections.entrypoint.permanent=true
+    ports:
+      - "80:80"
+      - "8080:8080"
+    volumes:
+      # - ./certs:/certs
+      - /var/run/docker.sock:/var/run/docker.sock
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+    networks:
+      - web
