@@ -23,10 +23,7 @@
         policy: ACCEPT
 
     - name: Iptables flush tables
-      iptables:
-        table: '{{ item }}'
-        flush: yes
-      with_items:  [ 'nat', 'filter']
+      iptables: flush=yes
 
     - name: delete all user-defined chains on filter table
       shell: iptables -t filter -X
@@ -123,7 +120,7 @@
         name: ssh
         enabled: yes
 
-#  post_tasks:
-#    
-#    - name: reboot
-#      reboot:
+  post_tasks:
+    
+    - name: reboot
+      reboot:

@@ -74,21 +74,39 @@
         chain: DOCKER-USER
         in_interface: eth0
         jump: DROP
-
+    
     - name: allow established connections for docker
       iptables:
         action: insert
         chain: DOCKER-USER
-        ctstate: [ RELATED, ESTABLISHED ]
-        in_interface: eth0
+        ctstate: [ 'RELATED', 'ESTABLISHED' ]
         jump: ACCEPT
 
-    - name: allow swarm nodes
+    - name: allow traffic from docker0 and docker_gwbridge to get metrics
+      iptables:
+        chain: INPUT
+        in_interface: "{{item}}"
+        jump: ACCEPT
+      loop: [ 'docker0', 'docker_gwbridge' ]
+
+    - name: allow swarm nodes tcp
       iptables:
         chain: INPUT
         source: "{{item}}/32"
         jump: ACCEPT
         ctstate: [ NEW ]
+        ports: [2377, 7946]
+        protocol: tcp
+      loop: "{{SWARM_ADDRS}}"
+
+    - name: allow swarm nodes udp
+      iptables:
+        chain: INPUT
+        source: "{{item}}/32"
+        jump: ACCEPT
+        ctstate: [ NEW ]
+        ports: [4789, 7946]
+        protocol: udp
       loop: "{{SWARM_ADDRS}}"
 
     - name: save iptables
@@ -104,11 +122,10 @@
         state: absent
         force: yes
 
-    - name: create docker_gwbridge
+    - name: create docker_gwbridge with fixed fixed cidr
       docker_network:
         name: docker_gwbridge
-        ipam_config:
-          - subnet: 10.11.0.0/16
+        ipam_config: subnet=172.18.0.0/16
         driver_options:
           com.docker.network.bridge.name: docker_gwbridge
           com.docker.network.enable_icc: false

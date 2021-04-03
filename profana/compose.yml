@@ -28,7 +28,8 @@ services:
     image: alpine/socat
     networks:
       - monitoring
-    command: -d -d TCP-L:4999,fork TCP:10.11.0.1:4999
+    # change for address of docker0 and exposed metrics addr
+    command: -d -d TCP-L:4999,fork TCP:172.17.0.1:4999
     deploy:
       mode: global
 
