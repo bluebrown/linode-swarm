@@ -13,7 +13,10 @@
         cache_valid_time: 3600
 
     - name: Upgrade all apt packages
-      apt: upgrade=dist force_apt_get=yes
+      apt: 
+        upgrade: dist 
+        force_apt_get: yes
+
 
   tasks:
 
@@ -23,7 +26,10 @@
         policy: ACCEPT
 
     - name: Iptables flush tables
-      iptables: flush=yes
+      iptables:
+        table: "{{item}}"
+        flush: yes
+      loop: [ 'nat', 'filter', 'mangle' ]
 
     - name: delete all user-defined chains on filter table
       shell: iptables -t filter -X
@@ -38,7 +44,7 @@
     - name: Allow established & related state 
       iptables:
         chain: INPUT
-        ctstate: [ RELATED, ESTABLISHED ]
+        ctstate: RELATED,ESTABLISHED
         jump: ACCEPT
 
     - name: allow commander to connect on ssh
@@ -55,6 +61,11 @@
         chain: "INPUT"
         policy: DROP 
     
+    - name: create iptables dir
+      file:
+        path: /etc/iptables
+        state: directory
+
     - name: save iptables
       shell: iptables-save > /etc/iptables/rules.v4 && ip6tables-save > /etc/iptables/rules.v6
 
@@ -115,12 +126,10 @@
         line: '{{item.key}} {{item.value}}'
         state: present
 
-    - name: enable sshd
+  post_tasks:
+
+    - name: enable & restart sshd
       service:
         name: ssh
+        state: restarted
         enabled: yes
-
-  post_tasks:
-    
-    - name: reboot
-      reboot:

@@ -10,12 +10,9 @@ variable "NODE_ROOT_PWD" {
   sensitive   = true
 }
 
-variable "PRIVATE_KEY_PATH" {
-  type      = string
-  default   = "../secrets/playbox"
-  sensitive = true
-}
-
 variable "PUBLIC_KEY_PATH" {
+  description = "public  ssh key that is added to the nodes"
   type      = string
+  sensitive = true
+
 }

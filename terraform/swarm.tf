@@ -13,7 +13,7 @@ provider "linode" {
 data "linode_profile" "me" {}
 
 resource "linode_instance" "swarm-node" {
-  count            = 2
+  count            = 1
   label            = "swarm-node-${count.index}"
   image            = "linode/ubuntu20.04"
   type             = "g6-nanode-1"

@@ -1,5 +1,6 @@
 ---
-- hosts: all
+- name: prepare nodes
+  hosts: all
   become: true
   vars_files:
       - vars.yml
@@ -79,7 +80,7 @@
       iptables:
         action: insert
         chain: DOCKER-USER
-        ctstate: [ 'RELATED', 'ESTABLISHED' ]
+        ctstate: RELATED,ESTABLISHED
         jump: ACCEPT
 
     - name: allow traffic from docker0 and docker_gwbridge to get metrics
@@ -89,23 +90,39 @@
         jump: ACCEPT
       loop: [ 'docker0', 'docker_gwbridge' ]
 
-    - name: allow swarm nodes tcp
+    - name: allow swarm nodes tcp 2377
       iptables:
         chain: INPUT
         source: "{{item}}/32"
         jump: ACCEPT
-        ctstate: [ NEW ]
-        ports: [2377, 7946]
+        destination_port: "2377"
         protocol: tcp
       loop: "{{SWARM_ADDRS}}"
 
-    - name: allow swarm nodes udp
+    - name: allow swarm nodes tcp 7946
       iptables:
         chain: INPUT
         source: "{{item}}/32"
         jump: ACCEPT
-        ctstate: [ NEW ]
-        ports: [4789, 7946]
+        destination_port: "7946"
+        protocol: tcp
+      loop: "{{SWARM_ADDRS}}"
+
+    - name: allow swarm nodes udp 7946
+      iptables:
+        chain: INPUT
+        source: "{{item}}/32"
+        jump: ACCEPT
+        destination_port: "7946"
+        protocol: udp
+      loop: "{{SWARM_ADDRS}}"
+
+    - name: allow swarm nodes udp 4789
+      iptables:
+        chain: INPUT
+        source: "{{item}}/32"
+        jump: ACCEPT
+        destination_port: "4789"
         protocol: udp
       loop: "{{SWARM_ADDRS}}"
 
@@ -131,6 +148,14 @@
           com.docker.network.enable_icc: false
           com.docker.network.enable_masquerade: true
 
+
+- name: join worker nodes
+  hosts: worker
+  become: true
+  vars_files:
+      - vars.yml
+  
+  tasks:
     - name: join to swarm
       docker_swarm:
         state: join
@@ -138,6 +163,6 @@
         remote_addrs: [ '{{COMMANDER_IP}}:2377' ]
         labels:
           linode_type: nanode
-          project: playbox
+          project: linode-swarm
 
 
