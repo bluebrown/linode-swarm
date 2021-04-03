@@ -13,6 +13,10 @@
 ## Snippets
 
 ```
+curl -X POST http://localhost:9090/-/reload
+```
+
+```
 openssl passwd -salt superSalt -1 superPWD
 ```
 
