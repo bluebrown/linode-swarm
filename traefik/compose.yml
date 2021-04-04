@@ -13,18 +13,19 @@ services:
         - --providers.docker.swarmMode
         - --providers.docker.exposedByDefault=false
         - --entrypoints.http.address=:80
-        #- --providers.docker.tls.cert=/certs/fullchain.cert
-        #- --providers.docker.tls.key=path/to/privkey.prem
-        #- --entrypoints.websecure.address=:443
-        #- --entrypoints.web.http.redirections.entryPoint.scheme=https
-        #- --entrypoints.web.http.redirections.entryPoint.to=websecure
-        #- --entrypoints.web.http.redirections.entrypoint.permanent=true
+        - --entrypoints.https.address=:443
+        - --entrypoints.http.http.redirections.entryPoint.scheme=https
+        - --entrypoints.http.http.redirections.entryPoint.to=https
+        - --entrypoints.http.http.redirections.entrypoint.permanent=true
+        - --providers.file.directory=/etc/traefik/dynamic
     ports:
       - "80:80"
+      - "443:443"
       - "8080:8080"
     volumes:
-      # - ./certs:/certs
+      - ./certs:/etc/certs
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./certs.yml:/etc/traefik/dynamic/certs.yaml
     deploy:
       placement:
         constraints:
