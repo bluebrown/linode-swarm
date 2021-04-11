@@ -1,0 +1,3 @@
+[submodule "ansible-provisioning"]
+	path = ansible-provisioning
+	url = https://github.com/bluebrown/ansible-provisioning
