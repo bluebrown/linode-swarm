@@ -1,5 +1,0 @@
-{
-  "experimental" : true,
-  "bip": "172.17.0.1/16",
-  "metrics-addr" : "0.0.0.0:4999"
-}

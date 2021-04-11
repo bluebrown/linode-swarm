@@ -51,7 +51,7 @@ resource "linode_domain" "cluster_domain" {
   tags      = ["terrafrom", "swarm"]
 }
 
-# set up dns round robin to manager nodes where traefik will be deployed
+# set up dns round robin to manager nodes where proxy will be deployed
 resource "linode_domain_record" "manager_nodes" {
   count       = var.MANAGER_COUNT
   domain_id   = linode_domain.cluster_domain.id
